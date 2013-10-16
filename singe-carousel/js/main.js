@@ -36,7 +36,7 @@ App.Carousel = Backbone.View.extend({
 	className: "carousel",
 
 	panes: [], //will hold an object of panes containing the view en the reference to DOM element inside the carousel
-	current_pane: 0, //will hold the current pane
+	currentPane: 0, //will hold the current pane
 
 	events: {
 		'release': 'release',
@@ -110,12 +110,12 @@ App.Carousel = Backbone.View.extend({
 		var pane_count = this.$("ul>li").length;
 		var pane_width = this.$el.width();
 		// stick to the finger
-		var pane_offset = -(100/pane_count)*this.current_pane;
+		var pane_offset = -(100/pane_count)*this.currentPane;
 		//console.log(pane_offset);
 		var drag_offset = ((100/pane_width)*ev.gesture.deltaX) / pane_count;
 		// slow down at the first and last pane
-		if((this.current_pane == 0 && ev.gesture.direction == Hammer.DIRECTION_RIGHT) ||
-			(this.current_pane == pane_count-1 && ev.gesture.direction == Hammer.DIRECTION_LEFT)) {
+		if((this.currentPane == 0 && ev.gesture.direction == Hammer.DIRECTION_RIGHT) ||
+			(this.currentPane == pane_count-1 && ev.gesture.direction == Hammer.DIRECTION_LEFT)) {
 			drag_offset *= .4;
 		}
 
@@ -155,7 +155,7 @@ App.Carousel = Backbone.View.extend({
 			}
 		}
 		else {
-			this.gotoPane(this.current_pane, true);
+			this.gotoPane(this.currentPane, true);
 		}
 	},
 
@@ -187,9 +187,9 @@ App.Carousel = Backbone.View.extend({
 
 		// between the bounds
 		index = Math.max(0, Math.min(index, pane_count-1));
-		this.current_pane = index;
+		this.currentPane = index;
 
-		var offset = -((100/pane_count)*this.current_pane);
+		var offset = -((100/pane_count)*this.currentPane);
 		this.setContainerOffset(offset, true);
 	},
 
@@ -203,11 +203,11 @@ App.Carousel = Backbone.View.extend({
 	},
 
 	slideFromLeft: function(view){
-		this.gotoPane( this.current_pane - 1, true );
+		this.gotoPane( this.currentPane - 1, true );
 	},
 
 	slideFromRight: function(view){
-		this.gotoPane( this.current_pane + 1, true );
+		this.gotoPane( this.currentPane + 1, true );
 	},
 
 	slideOverFromLeft: function(view){
