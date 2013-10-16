@@ -3,17 +3,15 @@ App = {
 		console.log("page loaded");
 
 		var carousel = new App.Carousel();
-		$("body").empty();
-		$("body").append(carousel.el); //add to body
+		$("#fuckingcontainer").empty();
+		$("#fuckingcontainer").append(carousel.el); //add it to something
 
-		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview 1"})} ) );
-		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview 2"})} ) );
-		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview 3"})} ) );
-		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview 4"})} ) );
-		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview 5"})} ) );
-		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview 6"})} ) );
-
-
+		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview append 1"})} ) );
+		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview append 2"})} ) );
+		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview append 3"})} ) );
+		carousel.prependView( new App.TestView( {model: new App.TestModel({title: "testview prepend 1"})} ) );
+		carousel.prependView( new App.TestView( {model: new App.TestModel({title: "testview prepend 2"})} ) );
+		carousel.prependView( new App.TestView( {model: new App.TestModel({title: "testview prepend 3"})} ) );
 	}
 };
 
@@ -29,14 +27,7 @@ App.TestView = Backbone.View.extend({
 
 	render: function(){
 		this.$el.text(this.model.get('title'));
-		/*Random background color- by javascriptkit.com
-		Visit JavaScript Kit (http://javascriptkit.com) for script
-		Credit must stay intact for use*/
-
-		//Enter list of bgcolors:
-		var bgcolorlist = new Array("#DFDFFF", "#FFFFBF", "#80FF80", "#EAEAFF", "#C9FFA8", "#F7F7F7", "#FFFFFF", "#DDDD00");
-		var randombgcolor = bgcolorlist[Math.floor(Math.random()*bgcolorlist.length)];
-		this.$el.css('background-color', randombgcolor);
+		this.$el.css('background-color', "#"+((1<<24)*Math.random()|0).toString(16));
 		return this;
 	}
 });
@@ -80,6 +71,18 @@ App.Carousel = Backbone.View.extend({
 		var li = document.createElement('li');
 		this.$("ul").append(li);
 		this.panes.push({
+			el: li,
+			view: view
+		});
+
+		// ad el of view to li:
+		$(li).append(view.el);
+	},
+
+	prependView: function(view){
+		var li = document.createElement('li');
+		this.$("ul").prepend(li);
+		this.panes.unshift({
 			el: li,
 			view: view
 		});
@@ -157,8 +160,6 @@ App.Carousel = Backbone.View.extend({
 	},
 
 	setContainerOffset: function(percent, animate) {
-		console.log("setting container offset: " + percent);
-
 		var pane_width = this.$el.width();
 		var pane_count = this.$("ul>li").length;
 
@@ -198,10 +199,7 @@ App.Carousel = Backbone.View.extend({
 			this.layers[0].panes.push(view);
 
 			var li = $(createElement('li'));
-
 		}
-
-
 	},
 
 	slideFromLeft: function(view){
