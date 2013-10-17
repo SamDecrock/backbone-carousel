@@ -62,6 +62,8 @@ App.Carousel = Backbone.View.extend({
 	panes: [], //will hold an object of panes containing the view en the reference to DOM element inside the carousel
 	currentPane: 0, //will hold the current pane
 
+	listeners: {}, //listeners for events
+
 	events: {
 		'release': 'release',
 		'dragleft': 'drag',
@@ -123,10 +125,38 @@ App.Carousel = Backbone.View.extend({
 		this.gotoPane(this.currentPane+1, false);
 	},
 
+	addListener: function (type, listener){
+		if(!this.listeners[type])
+			this.listeners[type] = [];
+
+		this.listeners[type].push(listener);
+	},
+
+	on: this.addListener,
+
+	removeListener: function (type, listener){
+		if(!this.listeners[type]) return;
+
+		for (var i = this.listeners[type].length - 1; i >= 0; i--) {
+			if( this.listeners[type][i] == listener){
+				this.listeners[type].splice(i, 1);
+				break;
+			}
+		};
+	},
+
+	fireEvent: function(type, event){
+		if(!this.listeners[type]) return;
+
+		for (var i = this.listeners[type].length - 1; i >= 0; i--) {
+			this.listeners[type][i](event);
+		};
+	},
+
 	updateDimensions: function(){
 		this.$("ul").removeClass("animate");
 
-		pane_width = this.$el.width();
+		var pane_width = this.$el.width();
 
 		// every pane get's the width of the view (the carousel)
 		this.$("ul>li").each(function (i, elem){
@@ -138,7 +168,7 @@ App.Carousel = Backbone.View.extend({
 
 		this.$("ul").addClass("animate");
 
-		this.gotoPane(this.currentPane,false);
+		this.gotoPane(this.currentPane, false);
 	},
 
 	drag: function(ev){
