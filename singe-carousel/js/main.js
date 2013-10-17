@@ -1,17 +1,41 @@
 App = {
 	init: function() {
 		console.log("page loaded");
+		var appendcount = 0;
+		var prependcount = 0;
 
 		var carousel = new App.Carousel();
 		$("#fuckingcontainer").empty();
 		$("#fuckingcontainer").append(carousel.el); //add it to something
 
-		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview append 1"})} ) );
-		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview append 2"})} ) );
-		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview append 3"})} ) );
-		carousel.prependView( new App.TestView( {model: new App.TestModel({title: "testview prepend 1"})} ) );
-		carousel.prependView( new App.TestView( {model: new App.TestModel({title: "testview prepend 2"})} ) );
-		carousel.prependView( new App.TestView( {model: new App.TestModel({title: "testview prepend 3"})} ) );
+		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview append " + ++appendcount})} ) );
+		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview append " + ++appendcount})} ) );
+		carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview append " + ++appendcount})} ) );
+
+		carousel.prependView( new App.TestView( {model: new App.TestModel({title: "testview prepend " + ++prependcount})} ) );
+		carousel.prependView( new App.TestView( {model: new App.TestModel({title: "testview prepend " + ++prependcount})} ) );
+		carousel.prependView( new App.TestView( {model: new App.TestModel({title: "testview prepend " + ++prependcount})} ) );
+
+
+		$("#btnAppend").click(function (ev){
+			console.log("clicked append");
+
+			carousel.appendView( new App.TestView( {model: new App.TestModel({title: "testview append " + ++appendcount})} ) );
+		});
+
+		$("#btnPrepend").click(function (ev){
+			console.log("clicked prepend");
+
+			carousel.prependView( new App.TestView( {model: new App.TestModel({title: "testview prepend " + ++prependcount})} ) );
+		});
+
+		$("#btnResize").click(function (ev){
+			console.log("resize prepend");
+
+			$("#fuckingcontainer").width($("#fuckingcontainer").width() - 10);
+			carousel.updateDimensions();
+		});
+
 	}
 };
 
@@ -49,11 +73,11 @@ App.Carousel = Backbone.View.extend({
 	initialize: function(){
 		this.render();
 
-		this.setPaneDimensions();
+		this.updateDimensions();
 
 		var self = this;
 		$(window).on("load resize orientationchange", function() {
-			self.setPaneDimensions.call(self);
+			self.updateDimensions.call(self);
 		})
 
 		console.log("adding hammer");
@@ -67,31 +91,41 @@ App.Carousel = Backbone.View.extend({
 		return this;
 	},
 
-	appendView: function(view){
+	appendView: function(view, goToIt){
 		var li = document.createElement('li');
 		this.$("ul").append(li);
 		this.panes.push({
 			el: li,
 			view: view
 		});
-
 		// ad el of view to li:
 		$(li).append(view.el);
+		this.updateDimensions();
+
+		if(goToIt){
+			var index = this.panes.length - 1;
+			this.gotoPane(index);
+		}
 	},
 
-	prependView: function(view){
+	prependView: function(view, goToIt){
 		var li = document.createElement('li');
 		this.$("ul").prepend(li);
 		this.panes.unshift({
 			el: li,
 			view: view
 		});
-
 		// ad el of view to li:
 		$(li).append(view.el);
+		this.updateDimensions();
+
+		// if a pane is prepended, the index of the currentpane increaess
+		this.gotoPane(this.currentPane+1, false);
 	},
 
-	setPaneDimensions: function(){
+	updateDimensions: function(){
+		this.$("ul").removeClass("animate");
+
 		pane_width = this.$el.width();
 
 		// every pane get's the width of the view (the carousel)
@@ -101,6 +135,10 @@ App.Carousel = Backbone.View.extend({
 
 		// the list containing al the panes gets the width of view * nr of panes
 		this.$("ul").width(pane_width * this.$("ul>li").length);
+
+		this.$("ul").addClass("animate");
+
+		this.gotoPane(this.currentPane,false);
 	},
 
 	drag: function(ev){
@@ -110,9 +148,9 @@ App.Carousel = Backbone.View.extend({
 		var pane_count = this.$("ul>li").length;
 		var pane_width = this.$el.width();
 		// stick to the finger
-		var pane_offset = -(100/pane_count)*this.currentPane;
-		//console.log(pane_offset);
-		var drag_offset = ((100/pane_width)*ev.gesture.deltaX) / pane_count;
+		var pane_offset = -this.currentPane * pane_width;
+
+		var drag_offset = ev.gesture.deltaX;
 		// slow down at the first and last pane
 		if((this.currentPane == 0 && ev.gesture.direction == Hammer.DIRECTION_RIGHT) ||
 			(this.currentPane == pane_count-1 && ev.gesture.direction == Hammer.DIRECTION_LEFT)) {
@@ -159,10 +197,7 @@ App.Carousel = Backbone.View.extend({
 		}
 	},
 
-	setContainerOffset: function(percent, animate) {
-		var pane_width = this.$el.width();
-		var pane_count = this.$("ul>li").length;
-
+	setContainerOffset: function(pixels, animate) {
 		this.$("ul").removeClass("animate");
 
 		if(animate) {
@@ -171,26 +206,26 @@ App.Carousel = Backbone.View.extend({
 
 		if(Modernizr.csstransforms3d) {
 			console.log("translate3d");
-			this.$("ul").css("transform", "translate3d("+ percent +"%,0,0) scale3d(1,1,1)");
+			this.$("ul").css("transform", "translate3d("+ pixels +"px,0,0) scale3d(1,1,1)");
 		}
 		else if(Modernizr.csstransforms) {
-			this.$("ul").css("transform", "translate("+ percent +"%,0)");
+			this.$("ul").css("transform", "translate("+ pixels +"px,0)");
 		}
 		else {
-			var px = ((pane_width*pane_count) / 100) * percent;
-			this.$("ul").css("left", px+"px");
+			this.$("ul").css("left", pixels+"px");
 		}
 	},
 
-	gotoPane: function( index ) {
+	gotoPane: function(index, animate) {
 		var pane_count = this.$("ul>li").length;
+		var pane_width = this.$el.width();
 
 		// between the bounds
 		index = Math.max(0, Math.min(index, pane_count-1));
 		this.currentPane = index;
 
-		var offset = -((100/pane_count)*this.currentPane);
-		this.setContainerOffset(offset, true);
+		var offset = -pane_width*this.currentPane;
+		this.setContainerOffset(offset, animate);
 	},
 
 	setInitialView: function(view){
